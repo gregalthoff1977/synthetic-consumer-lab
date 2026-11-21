@@ -21,13 +21,15 @@ def generate_response(persona: dict, concept: dict, api_key: str, model: str = "
             "Give one or two sentences describing your likely purchase behavior and the main reason.")
     parts = [{"type": "text", "text": info}]
     path = concept.get("image_path")
+    if not path or not os.path.isfile(path):
+        raise FileNotFoundError(f"Packaging image missing or inaccessible: {path!r}. Reupload the image before running this study.")
     if path and os.path.isfile(path):
         mime = mimetypes.guess_type(path)[0] or "image/png"
         if mime not in {"image/png", "image/jpeg", "image/webp", "image/gif"}:
             raise ValueError("Unsupported image type")
         with open(path, "rb") as f:
             image = base64.b64encode(f.read()).decode()
-        parts.append({"type": "image_url", "image_url": {"url": f"data:{mime};base64,{image}", "detail": "low"}})
+        parts.append({"type": "image_url", "image_url": {"url": f"data:{mime};base64,{image}", "detail": "high"}})
     result = client.chat.completions.create(model=model, temperature=0.5, max_tokens=110,
         messages=[{"role": "system", "content": system}, {"role": "user", "content": parts}])
     answer = (result.choices[0].message.content or "").strip()
