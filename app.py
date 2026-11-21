@@ -17,10 +17,10 @@ st.title("Synthetic Consumer Lab")
 st.caption("Exploratory synthetic concept testing · Not validated against human consumers")
 st.warning("The published SSR algorithm is used, but the six anchors in this prototype are authored approximations, not the original study's undisclosed anchors. The upstream package's default encoder also differs from the paper's OpenAI embedding model. Do not interpret outputs as actual demand forecasts.", icon="⚠️")
 
-@st.cache_resource
-def db():
-    return connect()
-conn = db()
+# Open a connection in the current Streamlit script thread.
+# Do not cache SQLite connections globally: Streamlit can reuse cached resources
+# across sessions running on different threads.
+conn = connect()
 
 def fresh_study():
     return {"id": str(uuid4()), "name": "New concept study", "category": "Beverages", "objective": "Compare concepts for exploratory purchase intent", "market": "United States", "panel_n": 25, "age_min": 21, "age_max": 65, "seed": 42,
