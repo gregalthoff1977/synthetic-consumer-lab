@@ -4,7 +4,7 @@ import mimetypes
 import os
 from openai import OpenAI
 
-QUESTION = "Based on everything you've seen and heard, how likely are you to purchase this product?"
+QUESTION = "Based only on the product packaging shown, how likely are you to purchase this product? Answer naturally in one or two sentences, giving your main reason. Do not use a number, rating, or percentage."
 
 
 def generate_response(persona: dict, concept: dict, api_key: str, model: str = "gpt-4o-mini") -> str:
@@ -16,10 +16,7 @@ def generate_response(persona: dict, concept: dict, api_key: str, model: str = "
               f"US region {persona['region']}. Answer briefly in first person with realistic uncertainty. "
               "Do not produce a number, score, Likert rating, or percentage. You may dislike the concept. "
               "Base the response only on information presented; do not assert personal experience with it.")
-    info = (f"Concept: {concept['name']}\nDescription: {concept['description']}\n"
-            f"Benefits: {concept.get('benefits','')}\nPrice: {concept.get('price','not provided')}\n\n{QUESTION} "
-            "Give one or two sentences describing your likely purchase behavior and the main reason.")
-    parts = [{"type": "text", "text": info}]
+    parts = [{"type": "text", "text": QUESTION}]
     path = concept.get("image_path")
     if not path or not os.path.isfile(path):
         raise FileNotFoundError(f"Packaging image missing or inaccessible: {path!r}. Reupload the image before running this study.")
