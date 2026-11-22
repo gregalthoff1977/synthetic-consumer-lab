@@ -61,13 +61,14 @@ with tabs[0]:
         s["objective"] = st.text_area("Research objective", s["objective"], height=72)
         s["market"] = st.text_input("Market", s["market"])
     st.subheader("Product concepts")
+    st.caption("Image-only purchase-intent test: the model receives the packaging image, not the description, benefits, price, or internal concept name.")
     for idx, concept in enumerate(s["concepts"]):
         with st.expander(f"{idx+1}. {concept['name']}", expanded=idx == 0):
             concept["name"] = st.text_input("Name", concept["name"], key=f"name_{concept['id']}")
             concept["description"] = st.text_area("Description", concept["description"], key=f"desc_{concept['id']}")
             concept["benefits"] = st.text_input("Benefits", concept.get("benefits", ""), key=f"ben_{concept['id']}")
             concept["price"] = st.text_input("Price and package size", concept.get("price", ""), key=f"price_{concept['id']}")
-            file = st.file_uploader("Concept visual (optional; passed to vision model)", type=["png", "jpg", "jpeg", "webp"], key=f"image_{concept['id']}")
+            file = st.file_uploader("Packaging image (required; passed to vision model)", type=["png", "jpg", "jpeg", "webp"], key=f"image_{concept['id']}")
             if file:
                 folder = Path(os.environ.get("LAB_IMAGE_DIR", "data/images"))
                 folder.mkdir(parents=True, exist_ok=True)
@@ -115,7 +116,7 @@ with tabs[1]:
 
 with tabs[2]:
     st.subheader("Live synthetic survey")
-    st.caption("Each task generates one LLM response. SSR scoring runs only after response generation and uses the published PyMC Labs ResponseRater.")
+    st.caption("Each task shows the model only the packaging image and respondent demographics. Text fields are not sent. SSR scoring runs after generation.")
     s["generation_model"] = st.text_input("OpenAI generation model", s.get("generation_model", "gpt-4o-mini"))
     key = os.environ.get("OPENAI_API_KEY", "")
     if not key:
@@ -132,8 +133,8 @@ with tabs[2]:
     st.write(f"Generated so far: {len(done_keys)} / {total}. Retry/resume skips successful responses.")
     run_limit = st.number_input("Maximum new responses this run", min_value=1, max_value=total, value=min(total, 25), help="Use small batches to control cost and allow interruption recovery.")
     if st.button("Run live survey", type="primary", disabled=not key):
-        if any(not c.get("description", "").strip() for c in s["concepts"]):
-            st.error("Every concept needs a description.")
+        if any(not c.get("image_path") or not Path(c["image_path"]).is_file() for c in s["concepts"]):
+            st.error("Every concept needs an uploaded packaging image. Reupload missing images before running.")
         else:
             persist()
             panel = create_panel(int(s["panel_n"]), int(s["age_min"]), int(s["age_max"]), s.get("weights"), int(s["seed"]))
